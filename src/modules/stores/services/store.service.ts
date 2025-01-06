@@ -14,7 +14,7 @@ export class StoreService {
     private readonly logger: LoggerService,
   ) {}
 
-  async createStore(createStoreDto: CreateStoreDto, req: Request): Promise<Store> {
+  async createStore(createStoreDto: CreateStoreDto, req: Request): Promise<CreateStoreDto> {
     const correlationId = req['correlationId'];
 
     this.logger.log('Creating new store.', correlationId);
@@ -22,9 +22,11 @@ export class StoreService {
     try {
       const newStore = new this.storeModel(createStoreDto);
       await newStore.save();
+
+      const transformedStore = plainToInstance(CreateStoreDto, newStore.toObject(), { excludeExtraneousValues: true });
       
       this.logger.log('Store created successfully!', correlationId);
-      return newStore;
+      return transformedStore;
 
     } catch (error) {
       this.logger.error('Error creating store.', error.stack, correlationId);
