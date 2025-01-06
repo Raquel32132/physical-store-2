@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { getMongoConfig } from './config/mongo.config';
 import { StoreModule } from './modules/stores/store.module';
+import { CorrelationIdMiddleware } from './common/middlewares/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -15,5 +16,11 @@ import { StoreModule } from './modules/stores/store.module';
     StoreModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+
+    // aqui estou aplicando o middleware do correlationId para todas as rotas
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}
 

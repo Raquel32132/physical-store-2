@@ -31,12 +31,12 @@ export class AddressDto {
 
   @IsString()
   @IsNotEmpty()
-  @Min(-90)
-  @Max(90)
   postalCode: string;
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(-90)
+  @Max(90)
   latitude: number;
 
   @IsNumber()
