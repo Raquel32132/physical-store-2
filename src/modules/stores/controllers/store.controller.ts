@@ -8,6 +8,10 @@ export class StoreController {
 
   @Post()
   async create(@Body() createStoreDto: CreateStoreDto) {
-    return this.storeService.create(createStoreDto);
+    try {
+      return this.storeService.create(createStoreDto);
+    } catch (error) {
+      throw new Error(`Error creating new store: ${error.message}`);
+    }
   }
 }
