@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query, Request } from "@nestjs/common";
-import { CreateStoreDto } from "../dto/create-store.dto";
+import { StoreDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
 
 @Controller('api/v1/store')
@@ -7,7 +7,7 @@ export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
   @Post()
-  async createStore(@Body() createStoreDto: CreateStoreDto, @Request() req) {
+  async createStore(@Body() createStoreDto: StoreDto, @Request() req) {
     const store = await this.storeService.createStore(createStoreDto, req);
 
     return {

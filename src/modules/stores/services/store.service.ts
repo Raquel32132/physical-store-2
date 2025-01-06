@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
-import { CreateStoreDto } from '../dto/create-store.dto';
+import { StoreDto } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
 
@@ -14,7 +14,7 @@ export class StoreService {
     private readonly logger: LoggerService,
   ) {}
 
-  async createStore(createStoreDto: CreateStoreDto, req: Request): Promise<CreateStoreDto> {
+  async createStore(createStoreDto: StoreDto, req: Request): Promise<StoreDto> {
     const correlationId = req['correlationId'];
 
     this.logger.log('Creating new store.', correlationId);
@@ -23,7 +23,7 @@ export class StoreService {
       const newStore = new this.storeModel(createStoreDto);
       await newStore.save();
 
-      const transformedStore = plainToInstance(CreateStoreDto, newStore.toObject(), { excludeExtraneousValues: true });
+      const transformedStore = plainToInstance(StoreDto, newStore.toObject(), { excludeExtraneousValues: true });
       
       this.logger.log('Store created successfully!', correlationId);
       return transformedStore;
@@ -34,7 +34,7 @@ export class StoreService {
     }
   }
 
-  async getAllStores(limit: number, offset: number, req: Request): Promise<{ stores: CreateStoreDto[], total: number }> {
+  async getAllStores(limit: number, offset: number, req: Request): Promise<{ stores: StoreDto[], total: number }> {
     const correlationId = req['correlationId'];
 
     this.logger.log('Fetching all stores.', correlationId);
@@ -49,13 +49,37 @@ export class StoreService {
         this.storeModel.countDocuments().exec()
       ]);
 
-      const transformedStores = plainToInstance(CreateStoreDto, stores, { excludeExtraneousValues: true });
+      const transformedStores = plainToInstance(StoreDto, stores, { excludeExtraneousValues: true });
 
       this.logger.log('Stores fetched successfully!', correlationId);
       return { stores: transformedStores, total };
 
     } catch (error) {
       this.logger.error('Error fetching stores.', error.stack, correlationId);
+      throw error;
+    }
+  }
+
+  async updateStore(id: string, updateStoreDto: StoreDto, req: Request): Promise<StoreDto> {
+    const correlationId = req['correlationId'];
+
+    this.logger.log(`Updating store with id: ${id}.`, correlationId);
+
+    try {
+      const store = await this.storeModel.findByIdAndUpdate(id, updateStoreDto, { new: true });
+
+      if (!store) {
+        this.logger.error(`Store with id: ${id} not found.`, correlationId);
+        throw new Error(`Store with id: ${id} not found.`);
+      }
+
+      const transformedStore = plainToInstance(StoreDto, store.toObject(), { excludeExtraneousValues: true });
+
+      this.logger.log('Store updated successfully!', correlationId);
+      return transformedStore;
+
+    } catch (error) {
+      this.logger.error('Error updating store.', error.stack, correlationId);
       throw error;
     }
   }
