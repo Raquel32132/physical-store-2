@@ -6,7 +6,7 @@ import { Store } from '../schemas/store.schema';
 import { StoreDto } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
-import { UpdatedStoreDto } from '../dto/updateStore.dto';
+import { UpdatedStoreDto } from '../dto/updatedStore.dto';
 
 @Injectable()
 export class StoreService {
