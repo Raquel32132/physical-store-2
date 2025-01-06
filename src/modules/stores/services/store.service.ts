@@ -24,8 +24,26 @@ export class StoreService {
       
       this.logger.log('Store created successfully!', correlationId);
       return newStore;
+
     } catch (error) {
       this.logger.error('Error creating store.', error.stack, correlationId);
+      throw error;
+    }
+  }
+
+  async getStores(req: Request): Promise<Store[]> {
+    const correlationId = req['correlationId'];
+
+    this.logger.log('Fetching all stores.', correlationId);
+
+    try {
+      const stores = await this.storeModel.find().exec();
+
+      this.logger.log('Stores fetched successfully!', correlationId);
+      return stores;
+
+    } catch (error) {
+      this.logger.error('Error fetching stores.', error.stack, correlationId);
       throw error;
     }
   }
