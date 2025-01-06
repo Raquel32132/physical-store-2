@@ -31,7 +31,7 @@ export class StoreService {
     }
   }
 
-  async getStores(req: Request): Promise<Store[]> {
+  async getAllStores(req: Request): Promise<Store[]> {
     const correlationId = req['correlationId'];
 
     this.logger.log('Fetching all stores.', correlationId);
