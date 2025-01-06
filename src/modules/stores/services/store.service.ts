@@ -5,6 +5,7 @@ import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
 import { CreateStoreDto } from '../dto/create-store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class StoreService {
@@ -31,16 +32,25 @@ export class StoreService {
     }
   }
 
-  async getAllStores(req: Request): Promise<Store[]> {
+  async getAllStores(limit: number, offset: number, req: Request): Promise<{ stores: CreateStoreDto[], total: number }> {
     const correlationId = req['correlationId'];
 
     this.logger.log('Fetching all stores.', correlationId);
 
     try {
-      const stores = await this.storeModel.find().exec();
+      const [stores, total] = await Promise.all([
+        this.storeModel
+          .find()
+          .skip(offset)
+          .limit(limit)
+          .exec(),
+        this.storeModel.countDocuments().exec()
+      ]);
+
+      const transformedStores = plainToInstance(CreateStoreDto, stores, { excludeExtraneousValues: true });
 
       this.logger.log('Stores fetched successfully!', correlationId);
-      return stores;
+      return { stores: transformedStores, total };
 
     } catch (error) {
       this.logger.error('Error fetching stores.', error.stack, correlationId);

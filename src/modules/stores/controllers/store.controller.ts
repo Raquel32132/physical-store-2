@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Request } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, Request } from "@nestjs/common";
 import { CreateStoreDto } from "../dto/create-store.dto";
 import { StoreService } from "../services/store.service";
 import { plainToInstance } from "class-transformer";
@@ -20,15 +20,18 @@ export class StoreController {
   }
 
   @Get()
-  async getStores(@Request() req) {
-    const stores = await this.storeService.getAllStores(req);
-    const transformedStores = plainToInstance(CreateStoreDto, stores, { excludeExtraneousValues: true });
+  async getAllStores(@Query('limit') limit: number = 10, @Query('offset') offset: number = 0, @Request() req, ) {
+    const { stores, total } = await this.storeService.getAllStores(limit, offset, req);
 
     return {
       statusCode: 200,
       message: 'Stores fetched successfully',
-      count: stores.length,
-      data: transformedStores
+      data: {
+        stores,
+        limit,
+        offset, 
+        total
+      }
     }
   }
 }
