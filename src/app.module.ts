@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { getMongoConfig } from './config/mongo.config';
-import { StoresModule } from './modules/stores/stores.module';
+import { StoreModule } from './modules/stores/store.module';
 
 @Module({
   imports: [
@@ -12,7 +12,7 @@ import { StoresModule } from './modules/stores/stores.module';
       inject: [ConfigService],
       useFactory: getMongoConfig
     }),
-    StoresModule,
+    StoreModule,
   ],
 })
 export class AppModule {}

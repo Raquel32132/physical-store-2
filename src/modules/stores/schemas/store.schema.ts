@@ -36,7 +36,7 @@ class Address {
 
 @Schema({ timestamps: true })
 export class Store extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, trim: true })
   storeName: string;
 
   @Prop({ required: true })
@@ -56,12 +56,6 @@ export class Store extends Document {
 
   @Prop({ type: Address, required: true })
   address: Address;
-
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updatedAt: Date;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);
