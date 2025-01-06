@@ -6,6 +6,7 @@ import { Store } from '../schemas/store.schema';
 import { StoreDto } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
+import { UpdatedStoreDto } from '../dto/updateStore.dto';
 
 @Injectable()
 export class StoreService {
@@ -60,22 +61,22 @@ export class StoreService {
     }
   }
 
-  async updateStore(id: string, updateStoreDto: StoreDto, req: Request): Promise<StoreDto> {
+  async updateStore(id: string, updateStoreDto: UpdatedStoreDto, req: Request): Promise<StoreDto> {
     const correlationId = req['correlationId'];
 
     this.logger.log(`Updating store with id: ${id}.`, correlationId);
 
     try {
-      const store = await this.storeModel.findByIdAndUpdate(id, updateStoreDto, { new: true });
+      const storeToUpdate = await this.storeModel.findByIdAndUpdate(id, { $set: updateStoreDto }, { new: true }).exec();
 
-      if (!store) {
+      if (!storeToUpdate) {
         this.logger.error(`Store with id: ${id} not found.`, correlationId);
         throw new Error(`Store with id: ${id} not found.`);
       }
 
-      const transformedStore = plainToInstance(StoreDto, store.toObject(), { excludeExtraneousValues: true });
+      const transformedStore = plainToInstance(StoreDto, storeToUpdate.toObject(), { excludeExtraneousValues: true });
 
-      this.logger.log('Store updated successfully!', correlationId);
+      this.logger.log(`Store with id: ${id} updated successfully!`, correlationId);
       return transformedStore;
 
     } catch (error) {
