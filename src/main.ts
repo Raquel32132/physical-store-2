@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  //Ativa a validação dos DTOs, passando pro controller apenas os campos que estão no DTO e Lança erro caso tenha campos não permitidos no DTO
+  // Ativa a validação dos DTOs, passando pro controller apenas os campos que estão no DTO e Lança erro caso tenha campos não permitidos no DTO
   app.useGlobalPipes(new ValidationPipe({ 
     whitelist: true, 
     forbidNonWhitelisted: true
