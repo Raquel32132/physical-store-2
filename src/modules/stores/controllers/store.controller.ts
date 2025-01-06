@@ -2,7 +2,7 @@ import { Body, Controller, Post, Request } from "@nestjs/common";
 import { CreateStoreDto } from "../dto/create-store.dto";
 import { StoreService } from "../services/store.service";
 
-@Controller('store')
+@Controller('api/v1/store')
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
