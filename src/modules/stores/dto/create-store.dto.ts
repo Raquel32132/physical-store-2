@@ -1,19 +1,28 @@
 import { Type } from 'class-transformer';
-import { IsString, IsBoolean, IsNumber, IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsBoolean, IsNumber, IsEnum, IsOptional, ValidateNested, IsNotEmpty } from 'class-validator';
 import { AddressDto } from './address.dto';
+
+enum StoreType {
+  PDV = 'PDV',
+  LOJA = 'LOJA',
+}
 
 export class CreateStoreDto {
   @IsString()
+  @IsNotEmpty()
   storeName: string;
 
   @IsBoolean()
+  @IsNotEmpty()
   takeOutInStore: boolean;
 
   @IsNumber()
+  @IsNotEmpty()
   shippingTimeInDays: number;
 
-  @IsEnum(['PDV', 'LOJA'])
-  type: string;
+  @IsEnum(StoreType)
+  @IsNotEmpty()
+  type: StoreType;
 
   @IsOptional()
   @IsString()
@@ -25,6 +34,6 @@ export class CreateStoreDto {
 
   @ValidateNested()
   @Type(() => AddressDto)
-  @IsOptional()
-  address?: AddressDto;
+  @IsNotEmpty()
+  address: AddressDto;
 }

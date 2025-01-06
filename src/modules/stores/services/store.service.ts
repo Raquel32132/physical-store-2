@@ -4,7 +4,6 @@ import { Model } from "mongoose";
 import { Store } from "../schemas/store.schema";
 import { CreateStoreDto } from "../dto/create-store.dto";
 
-
 @Injectable()
 export class StoreService {
   constructor(@InjectModel(Store.name) private storeModel: Model<Store>) {}

@@ -39,7 +39,7 @@ export class Store extends Document {
   @Prop({ required: true, trim: true })
   storeName: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, default: true })
   takeOutInStore: boolean;
 
   @Prop({ required: true })
