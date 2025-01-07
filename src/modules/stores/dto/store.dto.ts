@@ -7,7 +7,7 @@ enum StoreType {
   LOJA = 'LOJA',
 }
 
-export class CreateStoreDto {
+export class StoreDto {
   @Expose()
   @IsString()
   @IsNotEmpty()
