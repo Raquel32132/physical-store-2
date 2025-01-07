@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Request } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
 import { StoreDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
-import { UpdatedStoreDto } from "../dto/updatedStore.dto";
 
 @Controller('api/v1/store')
 export class StoreController {
@@ -34,9 +33,9 @@ export class StoreController {
     }
   }
 
-  @Patch(':id')
-  async updateStore(@Param('id') id: string, @Body() updatedStoreDto: UpdatedStoreDto, @Request() req) {
-    const updatedStore = await this.storeService.updateStore(id, updatedStoreDto, req);
+  @Put(':id')
+  async updateStore(@Param('id') id: string, @Body() storeDto: StoreDto, @Request() req) {
+    const updatedStore = await this.storeService.updateStore(id, storeDto, req);
 
     return {
       statusCode: 200,
@@ -45,5 +44,5 @@ export class StoreController {
     }
   }
 
-  
+
 }
