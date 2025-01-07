@@ -86,5 +86,28 @@ export class StoreService {
     }
   }
 
+  async getStoreById(id: string, req: Request): Promise<StoreDto> {
+    const correlationId = req['correlationId'];
+
+    this.logger.log(`Fetching store with id: ${id}.`, correlationId);
+
+    try {
+      const store = await this.storeModel.findById(id).exec();
+
+      if (!store) {
+        this.logger.error(`Store with id: ${id} not found.`, correlationId);
+        throw new Error(`Store with id: ${id} not found.`);
+      }
+
+      const transformedStore = plainToInstance(StoreDto, store.toObject(), { excludeExtraneousValues: true });
+
+      this.logger.log(`Store with id: ${id} fetched successfully!`, correlationId);
+      return transformedStore;
+
+    } catch (error) {
+      this.logger.error('Error fetching store.', error.stack, correlationId);
+      throw error;
+    }
+  }
 
 }
