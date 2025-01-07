@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-class Address {
+export class Address {
   @Prop({ required: true, trim: true })
   address1: string;
 
