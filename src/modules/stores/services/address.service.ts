@@ -3,12 +3,17 @@ import { LoggerService } from "src/common/logger/logger.service";
 import axios from "axios";
 import { validatePostalCode } from "src/utils/validate-postal-code.util";
 import { ViaCepResponseProps } from "src/common/interfaces/via-cep-response.interface";
+import { Client } from "@googlemaps/google-maps-services-js";
 
 @Injectable()
 export class AddressService {
+  private readonly googleMapsClient: Client;
+  
   constructor (
     private readonly logger: LoggerService
-  ) {}
+  ) {
+    this.googleMapsClient = new Client({});
+  }
 
   async getAddressByPostalCode(postalCode: string, req: Request): Promise<ViaCepResponseProps> {
     const correlationId = req['correlationId'];
@@ -19,7 +24,7 @@ export class AddressService {
       this.logger.log(`Validating postal code: ${postalCode}`, correlationId);
       await validatePostalCode(postalCode);
 
-      const response = await axios.get<ViaCepResponseProps>(`https://viacep.com.br/ws/${postalCode}/json/`);
+      const response = await axios.get<ViaCepResponseProps>(`${process.env.VIA_CEP_API_URL}${postalCode}/json/`);
 
       this.logger.log(`Address successfully retrieved from ViaCep API. Response data: ${JSON.stringify(response.data)}`, correlationId);
       return response.data;
@@ -30,6 +35,35 @@ export class AddressService {
     }
   }
 
+  async getCoordinates(postalCode: string, req: Request): Promise<{ lat: number; lng: number }> {
+    const correlationId = req['correlationId'];
 
+    this.logger.log(`Requesting coordinates from Google Maps API through postal code: ${postalCode}`, correlationId);
+
+    try {
+      this.logger.log(`Validating postal code: ${postalCode}`, correlationId);
+      await validatePostalCode(postalCode);
+      
+      const response = await this.googleMapsClient.geocode({
+        params: {
+          address: postalCode,
+          key: process.env.GOOGLE_MAPS_API_KEY
+        }
+      });
+
+      if (response.data.status === 'OK') {
+        this.logger.log(`Coordinates successfully retrieved from Google Maps API. Response data: ${JSON.stringify(response.data)}`, correlationId);
+        const { lat, lng } = response.data.results[0].geometry.location;
+        return { lat, lng };
+      } else {
+        this.logger.error(`Failed requesting coordinates for postal code: ${postalCode}. Status: ${response.data.status}`, correlationId);
+        throw new HttpException(`Failed requesting coordinates from Google Maps API: ${response.data.status}`, HttpStatus.BAD_REQUEST);
+      }
+
+    } catch (error) {
+      this.logger.error(`Error requesting coordinates from Google Maps API: ${error.message}`, error.stack, correlationId);
+      throw new HttpException(`Error requesting coordinates from Google Maps API: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
 
 }
