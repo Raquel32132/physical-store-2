@@ -44,5 +44,15 @@ export class StoreController {
     }
   }
 
+  @Get(':id')
+  async getStoreById(@Param('id') id: string, @Request() req ) {
+    const store = await this.storeService.getStoreById(id, req);
+
+    return {
+      statusCode: 200,
+      message: 'Store fetched successfully',
+      data: store
+    }
+  }
 
 }
