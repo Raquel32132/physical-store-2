@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
 import { StoreDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
-import { AddressService, ViaCepResponseProps } from "../services/address.service";
+import { AddressService } from "../services/address.service";
 
 @Controller('api/v1/store')
 export class StoreController {
@@ -64,10 +64,5 @@ export class StoreController {
       statusCode: 200,
       message: 'Store deleted successfully'
     }
-  }
-
-  @Get('postal-code/:postalCode')
-  async getAddressByPostalCode(@Param('postalCode') postalCode: string, @Request() req): Promise<ViaCepResponseProps> {
-    return this.addressService.getAddressByPostalCode(postalCode, req);
   }
 }
