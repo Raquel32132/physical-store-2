@@ -40,8 +40,7 @@ export class StoreController {
     }
   }
 
-
-  // Requested enpoints
+  // Requested endpoints
   @Get()
   async getAllStores(@Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
     const { stores, total } = await this.storeService.getAllStores(limit, offset, req);

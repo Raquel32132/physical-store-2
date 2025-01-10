@@ -125,7 +125,7 @@ export class StoreService {
     this.logger.log(`Fetching store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
-      this.logger.warn(`Invalid ObjectId: ${id}.`, correlationId);
+      this.logger.error(`Invalid ObjectId: ${id}.`, correlationId);
       throw new BadRequestException(`Invalid id format: ${id}`);
     }
 
@@ -144,6 +144,37 @@ export class StoreService {
 
     } catch (error) {
       this.logger.error(`Error fetching store with id: ${id}`, error.stack, correlationId);
+      throw error;
+    }
+  }
+
+  async getStoresByState(limit: number, offset: number, state: string, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
+    const correlationId = req['correlationId'];
+
+    this.logger.log(`Fetching stores within state: ${state}.`, correlationId);
+
+    if (!state) {
+      this.logger.error("State not provided.", correlationId);
+      throw new BadRequestException("State is required.");
+    }
+
+    try {
+      const [stores, total] = await Promise.all([
+        this.storeModel
+          .find({ state })
+          .skip(offset)
+          .limit(limit)
+          .exec(),
+        this.storeModel.countDocuments({ state }).exec(),
+      ]);
+
+      const transformedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
+
+      this.logger.log(`Stores within state ${state} fetched successfully!`, correlationId);
+      return { stores: transformedStores, total };
+
+    } catch (error) {
+      this.logger.error(`Error fetching stores within state: ${state}.`, error.stack, correlationId);
       throw error;
     }
   }
