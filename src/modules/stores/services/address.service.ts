@@ -78,6 +78,10 @@ export class AddressService {
     };
 
     try {
+      this.logger.log(`Validating postal codes: ${originPostalCode}, ${destinationPostalCode}`, correlationId);
+      await validatePostalCode(originPostalCode);
+      await validatePostalCode(destinationPostalCode);
+
       const response = await axios.post<CorreiosResponseProps[]>(`${process.env.CORREIOS_API_URL}`, payload, {
         headers: {'Content-Type': 'application/json',},
       });

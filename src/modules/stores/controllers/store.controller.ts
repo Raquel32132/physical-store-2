@@ -80,9 +80,9 @@ export class StoreController {
     }
   }
 
-  // @Get('coordinates/:postalCode')
-  // async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
-  //   return await this.addressService.getCoordinates(postalCode, req);
+  // @Get('shipping/:originPostalCode/:destinationPostalCode')
+  // async getAddressAndCoordinates(@Param('originPostalCode') originPostalCode: string, @Param('originPostalCode') destinationPostalCode: string, @Request() req) {
+  //   return await this.addressService.getShipping(originPostalCode, destinationPostalCode, req);
   // }
   
 }
