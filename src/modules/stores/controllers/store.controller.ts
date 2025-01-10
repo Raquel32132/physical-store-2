@@ -66,9 +66,9 @@ export class StoreController {
     }
   }
 
-  @Get('coordinates/:postalCode')
-  async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
-    return await this.addressService.getCoordinates(postalCode, req);
-  }
+  // @Get('coordinates/:postalCode')
+  // async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
+  //   return await this.addressService.getCoordinates(postalCode, req);
+  // }
   
 }

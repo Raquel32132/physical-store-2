@@ -17,7 +17,6 @@ export class AddressService {
 
   async getAddressByPostalCode(postalCode: string, req: Request): Promise<ViaCepResponseProps> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Requesting address from ViaCep API through postal code: ${postalCode}`, correlationId);
 
     try {
@@ -37,7 +36,6 @@ export class AddressService {
 
   async getCoordinates(postalCode: string, req: Request): Promise<{ lat: number; lng: number }> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Requesting coordinates from Google Maps API through postal code: ${postalCode}`, correlationId);
 
     try {
@@ -63,6 +61,40 @@ export class AddressService {
     } catch (error) {
       this.logger.error(`Error requesting coordinates from Google Maps API: ${error.message}`, error.stack, correlationId);
       throw new HttpException(`Error requesting coordinates from Google Maps API: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async calculateShipping(cepOrigem: string, cepDestino: string, req: Request): Promise<any> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Calculating shipping cost from ${cepOrigem} to ${cepDestino}`, correlationId);
+
+    const payload = {
+      cepOrigem,
+      cepDestino,
+      comprimento: "20",
+      largura: "15",
+      altura: "10",
+    };
+
+    try {
+      const response = await axios.post(`${process.env.CORREIOS_API_URL}/precosEPrazos`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      this.logger.log(`Shipping cost successfully retrieved: ${JSON.stringify(response.data)}`, correlationId);
+
+      if (!response.data || response.status !== HttpStatus.OK) {
+        this.logger.error(`Failed to calculate shipping. Response: ${JSON.stringify(response.data)}`, correlationId);
+        throw new HttpException('Failed to calculate shipping.', HttpStatus.BAD_REQUEST);
+      }
+
+      return response.data;
+
+    } catch (error) {
+      this.logger.error(`Error calculating shipping: ${error.message}`, error.stack, correlationId);
+      throw new HttpException(`Error calculating shipping: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
