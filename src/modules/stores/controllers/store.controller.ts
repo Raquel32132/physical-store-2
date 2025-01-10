@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
 import { StoreDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
+import { AddressService } from "../services/address.service";
 
 @Controller('api/v1/store')
 export class StoreController {
-  constructor(private readonly storeService: StoreService) {}
+  constructor(private readonly storeService: StoreService, private readonly addressService: AddressService) {}
 
   @Get()
   async getAllStores(@Query('limit') limit: number = 10, @Query('offset') offset: number = 0, @Request() req, ) {
@@ -65,5 +66,9 @@ export class StoreController {
     }
   }
 
-
+  // @Get('coordinates/:postalCode')
+  // async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
+  //   return await this.addressService.getCoordinates(postalCode, req);
+  // }
+  
 }

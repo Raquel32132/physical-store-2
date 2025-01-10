@@ -4,6 +4,7 @@ import { StoreController } from './controllers/store.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Store, StoreSchema } from './schemas/store.schema';
 import { LoggerModule } from 'src/common/logger/logger.module';
+import { AddressService } from './services/address.service';
 
 @Module({
   imports: [
@@ -11,6 +12,6 @@ import { LoggerModule } from 'src/common/logger/logger.module';
     LoggerModule,
   ],
   controllers: [StoreController],
-  providers: [StoreService],
+  providers: [StoreService, AddressService],
 })
 export class StoreModule {}
