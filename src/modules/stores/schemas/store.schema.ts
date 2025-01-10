@@ -1,8 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema()
-export class Address {
+@Schema({ timestamps: true })
+export class Store extends Document {
+  @Prop({ required: true, trim: true })
+  storeName: string;
+
+  @Prop({ required: true, default: true })
+  takeOutInStore: boolean;
+
+  @Prop({ required: true })
+  shippingTimeInDays: number;
+
+  @Prop({ required: true, enum: ['PDV', 'LOJA'] })
+  type: string
+
+  @Prop({ trim: true })
+  telephoneNumber: string;
+
+  @Prop({ trim: true })
+  emailAddress: string;
+
   @Prop({ required: true, trim: true })
   address1: string;
 
@@ -32,30 +50,6 @@ export class Address {
 
   @Prop({ required: true })
   longitude: number;
-}
-
-@Schema({ timestamps: true })
-export class Store extends Document {
-  @Prop({ required: true, trim: true })
-  storeName: string;
-
-  @Prop({ required: true, default: true })
-  takeOutInStore: boolean;
-
-  @Prop({ required: true })
-  shippingTimeInDays: number;
-
-  @Prop({ required: true, enum: ['PDV', 'LOJA'] })
-  type: string
-
-  @Prop({ trim: true })
-  telephoneNumber: string;
-
-  @Prop({ trim: true })
-  emailAddress: string;
-
-  @Prop({ type: Address, required: true })
-  address: Address;
 }
 
 export const StoreSchema = SchemaFactory.createForClass(Store);
