@@ -66,6 +66,20 @@ export class StoreController {
     }
   }
 
+  @Get('state/:state')
+  async getStoresByState(@Param('state') state: string, @Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
+    const { stores, total } = await this.storeService.getStoresByState(state, limit, offset, req);
+
+    return {
+      statusCode: 200,
+      message: `Stores within state ${state} fetched successfully`,
+      stores,
+      limit,
+      offset,
+      total
+    }
+  }
+
   // @Get('coordinates/:postalCode')
   // async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
   //   return await this.addressService.getCoordinates(postalCode, req);

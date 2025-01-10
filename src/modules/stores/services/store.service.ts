@@ -148,7 +148,7 @@ export class StoreService {
     }
   }
 
-  async getStoresByState(limit: number, offset: number, state: string, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
+  async getStoresByState(state: string, limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
 
     this.logger.log(`Fetching stores within state: ${state}.`, correlationId);
