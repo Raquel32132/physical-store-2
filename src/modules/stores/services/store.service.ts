@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
-import { LOJAStoreDto, PDVStoreDto, StoreRequestDto, StoreResponseDto } from '../dto/store.dto';
+import { LOJAStoreDto, PDVStoreDto, StoreRequestDto, StoreResponseDto, StoreType } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
 import { PinsProps } from 'src/common/interfaces/pins.interface';
@@ -16,6 +16,7 @@ export class StoreService {
   ) {}
 
   // CRUD service
+  // ajustar para que nao deixe criar lojas com cep invalido
   async createStore(createStoreDto: StoreRequestDto, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
     this.logger.log('Creating new store.', correlationId);
@@ -174,7 +175,6 @@ export class StoreService {
     }
   }
 
-  // criar dto da response
   async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: (PDVStoreDto | LOJAStoreDto)[], pins: PinsProps[], total: number }> {
     const correlationId = req['correlationId'];
     this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
@@ -188,7 +188,14 @@ export class StoreService {
 
       // Definir body da response diferente para LOJA e PDV
 
-      const transformedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
+      // Tranformar as stores na suas devida DTO
+      const transformedStores = stores.map(store => {
+        if (store.type === StoreType.PDV) {
+          return plainToInstance(PDVStoreDto, store, { excludeExtraneousValues: true });
+        } else if (store.type === StoreType.LOJA) {
+          return plainToInstance(LOJAStoreDto, store, { excludeExtraneousValues: true });
+        } 
+      });
 
       this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
       return { stores: transformedStores, pins, total };
