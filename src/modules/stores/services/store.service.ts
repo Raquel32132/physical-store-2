@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
-import { StoreRequestDto, StoreResponseDto } from '../dto/store.dto';
+import { LOJAStoreDto, PDVStoreDto, StoreRequestDto, StoreResponseDto } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
 import { PinsProps } from 'src/common/interfaces/pins.interface';
@@ -175,7 +175,7 @@ export class StoreService {
   }
 
   // criar dto da response
-  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: any[], pins: PinsProps[], total: number }> {
+  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: (PDVStoreDto | LOJAStoreDto)[], pins: PinsProps[], total: number }> {
     const correlationId = req['correlationId'];
     this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
 
