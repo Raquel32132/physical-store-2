@@ -6,6 +6,7 @@ import { Store } from '../schemas/store.schema';
 import { StoreRequestDto, StoreResponseDto } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
+import { PinsProps } from 'src/common/interfaces/pins.interface';
 
 @Injectable()
 export class StoreService {
@@ -173,11 +174,24 @@ export class StoreService {
     }
   }
 
-  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: any[], pins: any[], total: number }> {
+  // criar dto da response
+  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: any[], pins: PinsProps[], total: number }> {
     const correlationId = req['correlationId'];
     this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
 
     try {
+      // Buscar as todas as stores
+
+      // Pegar o cep de cada store e calcular o frete
+
+      // Criar os pins de cada store
+
+      // Definir body da response diferente para LOJA e PDV
+
+      const transformedStores = plainToInstance(StoreResponseDto, stores, { excludeExtraneousValues: true });
+
+      this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
+      return { stores: transformedStores, pins, total };
 
     } catch (error) {
       this.logger.error(`Error fetching stores with shipping to the postal code: ${postalCode}.`, error.stack, correlationId);
