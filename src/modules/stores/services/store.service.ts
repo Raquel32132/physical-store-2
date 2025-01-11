@@ -17,7 +17,6 @@ export class StoreService {
   // CRUD service
   async createStore(createStoreDto: StoreRequestDto, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log('Creating new store.', correlationId);
 
     try {
@@ -37,7 +36,6 @@ export class StoreService {
 
   async updateStore(id: string, storeDto: StoreRequestDto, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Updating store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -68,7 +66,6 @@ export class StoreService {
 
   async deleteStore(id: string, req: Request): Promise<void> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Deleting store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -95,7 +92,6 @@ export class StoreService {
   // Requested services
   async getAllStores(limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
-
     this.logger.log('Fetching all stores.', correlationId);
 
     try {
@@ -121,7 +117,6 @@ export class StoreService {
 
   async getStoreById(id: string, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Fetching store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -150,7 +145,6 @@ export class StoreService {
 
   async getStoresByState(state: string, limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Fetching stores within state: ${state}.`, correlationId);
 
     if (!state) {
@@ -175,6 +169,18 @@ export class StoreService {
 
     } catch (error) {
       this.logger.error(`Error fetching stores within state: ${state}.`, error.stack, correlationId);
+      throw error;
+    }
+  }
+
+  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: any[], pins: any[], total: number }> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
+
+    try {
+
+    } catch (error) {
+      this.logger.error(`Error fetching stores with shipping to the postal code: ${postalCode}.`, error.stack, correlationId);
       throw error;
     }
   }

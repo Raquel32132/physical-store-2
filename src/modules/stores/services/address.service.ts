@@ -16,6 +16,7 @@ export class AddressService {
     this.googleMapsClient = new Client({});
   }
 
+  // verificar a ordem da validação do cep // apenas ceps brasileiros
   async getAddressByPostalCode(postalCode: string, req: Request): Promise<ViaCepResponseProps> {
     const correlationId = req['correlationId'];
     this.logger.log(`Requesting address from ViaCep API through postal code: ${postalCode}`, correlationId);
@@ -100,5 +101,7 @@ export class AddressService {
       throw error;
     }
   }
+
+  // função para calcular a distancia da loja ate o cep
 
 }
