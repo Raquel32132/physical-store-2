@@ -1,57 +1,139 @@
-import { Exclude, Expose, Type } from 'class-transformer';
-import { IsString, IsBoolean, IsNumber, IsEnum, IsOptional, ValidateNested, IsNotEmpty } from 'class-validator';
-import { AddressDto } from './address.dto';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { IsString, IsBoolean, IsNumber, IsEnum, IsOptional, IsNotEmpty, Min, Max } from 'class-validator';
 
 enum StoreType {
   PDV = 'PDV',
   LOJA = 'LOJA',
 }
 
-export class StoreDto {
-  @Expose()
+export class StoreRequestDto {
   @IsString()
   @IsNotEmpty()
   storeName: string;
 
-  @Expose()
   @IsBoolean()
   @IsNotEmpty()
   takeOutInStore: boolean;
 
-  @Expose()
   @IsNumber()
   @IsNotEmpty()
   shippingTimeInDays: number;
 
-  @Expose()
   @IsEnum(StoreType)
   @IsNotEmpty()
   type: StoreType;
 
-  @Expose()
   @IsOptional()
   @IsString()
   telephoneNumber?: string;
 
-  @Expose()
   @IsOptional()
   @IsString()
   emailAddress?: string;
 
-  @Expose()
-  @ValidateNested()
-  @Type(() => AddressDto)
+  @IsString()
   @IsNotEmpty()
-  address: AddressDto;
+  address1: string;
+
+  @IsOptional()
+  @IsString()
+  address2?: string;
+
+  @IsOptional()
+  @IsString()
+  address3?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  neighborhood: string;
+
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @IsString()
+  @IsNotEmpty()
+  state: string;
+
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+
+  @IsString()
+  @IsNotEmpty()
+  postalCode: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(-90)
+  @Max(90)
+  latitude: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(-180)
+  @Max(180)
+  longitude: number;
+}
+
+export class StoreResponseDto {
+  @Expose({ name: '_id' })
+  @Transform(({ obj }) => obj._id.toString())
+  storeID: string;
+
+  @Expose()
+  storeName: string;
+
+  @Expose()
+  takeOutInStore: boolean;
+
+  @Expose()
+  shippingTimeInDays: number;
+
+  @Expose()
+  type: StoreType;
+
+  @Expose()
+  telephoneNumber?: string;
+
+  @Expose()
+  emailAddress?: string;
+
+  @Expose()
+  address1: string;
+
+  @Expose()
+  address2?: string;
+
+  @Expose()
+  address3?: string;
+
+  @Expose()
+  neighborhood: string;
+
+  @Expose()
+  city: string;
+
+  @Expose()
+  state: string;
+
+  @Expose()
+  country: string;
+
+  @Expose()
+  postalCode: string;
+
+  @Expose()
+  latitude: number;
+
+  @Expose()
+  longitude: number;
 
   @Exclude()
-  _id?: string;
+  createdAt: string;
 
   @Exclude()
-  createdAt?: string;
-
-  @Exclude()
-  updatedAt?: string;
+  updatedAt: string;
 
   @Exclude()
   __v?: number;

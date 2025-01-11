@@ -4,6 +4,7 @@ import axios from "axios";
 import { validatePostalCode } from "src/utils/validate-postal-code.util";
 import { ViaCepResponseProps } from "src/common/interfaces/via-cep-response.interface";
 import { Client } from "@googlemaps/google-maps-services-js";
+import { CorreiosResponseProps } from "src/common/interfaces/correios-response.interface";
 
 @Injectable()
 export class AddressService {
@@ -64,28 +65,30 @@ export class AddressService {
     }
   }
 
-  async calculateShipping(cepOrigem: string, cepDestino: string, req: Request): Promise<any> {
+  async getShipping(originPostalCode: string, destinationPostalCode: string, req: Request): Promise<CorreiosResponseProps[]> {
     const correlationId = req['correlationId'];
-    this.logger.log(`Calculating shipping cost from ${cepOrigem} to ${cepDestino}`, correlationId);
+    this.logger.log(`Calculating shipping from ${originPostalCode} to ${destinationPostalCode}`, correlationId);
 
     const payload = {
-      cepOrigem,
-      cepDestino,
+      cepOrigem: originPostalCode,
+      cepDestino: destinationPostalCode,
       comprimento: "20",
       largura: "15",
       altura: "10",
     };
 
     try {
-      const response = await axios.post(`${process.env.CORREIOS_API_URL}/precosEPrazos`, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      this.logger.log(`Validating postal codes: ${originPostalCode}, ${destinationPostalCode}`, correlationId);
+      await validatePostalCode(originPostalCode);
+      await validatePostalCode(destinationPostalCode);
+
+      const response = await axios.post<CorreiosResponseProps[]>(`${process.env.CORREIOS_API_URL}`, payload, {
+        headers: {'Content-Type': 'application/json',},
       });
 
-      this.logger.log(`Shipping cost successfully retrieved: ${JSON.stringify(response.data)}`, correlationId);
+      this.logger.log(`Shipping calculated successfully: ${JSON.stringify(response.data)}`, correlationId);
 
-      if (!response.data || response.status !== HttpStatus.OK) {
+      if (response.status !== 200) {
         this.logger.error(`Failed to calculate shipping. Response: ${JSON.stringify(response.data)}`, correlationId);
         throw new HttpException('Failed to calculate shipping.', HttpStatus.BAD_REQUEST);
       }
@@ -94,7 +97,7 @@ export class AddressService {
 
     } catch (error) {
       this.logger.error(`Error calculating shipping: ${error.message}`, error.stack, correlationId);
-      throw new HttpException(`Error calculating shipping: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw error;
     }
   }
 

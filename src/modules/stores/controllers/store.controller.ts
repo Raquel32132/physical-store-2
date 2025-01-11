@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
-import { StoreDto } from "../dto/store.dto";
+import { StoreRequestDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
 import { AddressService } from "../services/address.service";
 
@@ -7,46 +7,20 @@ import { AddressService } from "../services/address.service";
 export class StoreController {
   constructor(private readonly storeService: StoreService, private readonly addressService: AddressService) {}
 
-  @Get()
-  async getAllStores(@Query('limit') limit: number = 10, @Query('offset') offset: number = 0, @Request() req, ) {
-    const { stores, total } = await this.storeService.getAllStores(limit, offset, req);
-
-    return {
-      statusCode: 200,
-      message: 'Stores fetched successfully',
-      data: {
-        stores,
-        limit,
-        offset, 
-        total
-      }
-    }
-  }
-
-  @Get(':id')
-  async getStoreById(@Param('id') id: string, @Request() req ) {
-    const store = await this.storeService.getStoreById(id, req);
-
-    return {
-      statusCode: 200,
-      message: 'Store fetched successfully',
-      data: store
-    }
-  }
-
+  // CRUD
   @Post()
-  async createStore(@Body() createStoreDto: StoreDto, @Request() req) {
+  async createStore(@Body() createStoreDto: StoreRequestDto, @Request() req) {
     const store = await this.storeService.createStore(createStoreDto, req);
 
     return {
       statusCode: 201,
       message: 'Store created successfully',
-      data: store
+      store: store
     }
   }
 
   @Put(':id')
-  async updateStore(@Param('id') id: string, @Body() storeDto: StoreDto, @Request() req) {
+  async updateStore(@Param('id') id: string, @Body() storeDto: StoreRequestDto, @Request() req) {
     const updatedStore = await this.storeService.updateStore(id, storeDto, req);
 
     return {
@@ -66,9 +40,49 @@ export class StoreController {
     }
   }
 
-  // @Get('coordinates/:postalCode')
-  // async getAddressAndCoordinates(@Param('postalCode') postalCode: string, @Request() req) {
-  //   return await this.addressService.getCoordinates(postalCode, req);
+  // Requested endpoints
+  @Get()
+  async getAllStores(@Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
+    const { stores, total } = await this.storeService.getAllStores(limit, offset, req);
+
+    return {
+      statusCode: 200,
+      message: 'Stores fetched successfully',
+      stores,
+      limit,
+      offset, 
+      total
+    }
+  }
+
+  @Get(':id')
+  async getStoreById(@Param('id') id: string, @Request() req) {
+    const store = await this.storeService.getStoreById(id, req);
+
+    return {
+      statusCode: 200,
+      message: 'Store fetched successfully',
+      stores: store
+    }
+  }
+
+  @Get('state/:state')
+  async getStoresByState(@Param('state') state: string, @Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
+    const { stores, total } = await this.storeService.getStoresByState(state, limit, offset, req);
+
+    return {
+      statusCode: 200,
+      message: `Stores within state ${state} fetched successfully`,
+      stores,
+      limit,
+      offset,
+      total
+    }
+  }
+
+  // @Get('shipping/:originPostalCode/:destinationPostalCode')
+  // async getAddressAndCoordinates(@Param('originPostalCode') originPostalCode: string, @Param('originPostalCode') destinationPostalCode: string, @Request() req) {
+  //   return await this.addressService.getShipping(originPostalCode, destinationPostalCode, req);
   // }
   
 }
