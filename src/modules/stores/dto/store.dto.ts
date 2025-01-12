@@ -78,7 +78,7 @@ export class StoreRequestDto {
 
 export class StoreResponseDto {
   @Expose({ name: '_id' })
-  @Transform(({ obj }) => obj._id.toString())
+  @Transform(({ obj }) => obj._id ? obj._id.toString() : null)
   storeID: string;
 
   @Expose()

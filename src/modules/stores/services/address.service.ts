@@ -1,9 +1,9 @@
 import { Injectable, HttpStatus, HttpException } from "@nestjs/common";
 import axios from "axios";
-import { LoggerService } from "src/common/logger/logger.service";
+import { LoggerService } from "../../../common/logger/logger.service";
 import { Client, DistanceMatrixResponseData } from "@googlemaps/google-maps-services-js";
 import { CorreiosResponseProps } from "src/common/interfaces/correios-response.interface";
-import { formatPostalCode } from "src/utils/format-postal-code.util";
+import { formatPostalCode } from "../../../utils/format-postal-code.util";
 import { ViaCepResponseProps } from "src/common/interfaces/via-cep-response.interface";
 
 @Injectable()
