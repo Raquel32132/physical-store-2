@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Store } from '../schemas/store.schema';
@@ -7,6 +7,7 @@ import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
 import { PinsProps } from 'src/common/interfaces/pins.interface';
 import { AddressService } from './address.service';
+import { validatePostalCode } from 'src/utils/validate-postal-code.util';
 
 @Injectable()
 export class StoreService {
@@ -115,7 +116,7 @@ export class StoreService {
 
     } catch (error) {
       this.logger.error('Error fetching stores.', error.stack, correlationId);
-      throw error;
+      throw new HttpException('Failed to fetch stores.', HttpStatus.NOT_FOUND);
     }
   }
 
@@ -123,19 +124,9 @@ export class StoreService {
     const correlationId = req['correlationId'];
     this.logger.log(`Fetching store with id: ${id}.`, correlationId);
 
-    if (!Types.ObjectId.isValid(id)) {
-      this.logger.error(`Invalid ObjectId: ${id}.`, correlationId);
-      throw new BadRequestException(`Invalid id format: ${id}`);
-    }
-
     try {
       const store = await this.storeModel.findById(id).exec();
-
-      if (!store) {
-        this.logger.error(`Store with id: ${id} not found.`, correlationId);
-        throw new NotFoundException(`Store with id: ${id} not found.`);
-      }
-
+  
       const transformedStore = plainToInstance(StoreResponseDto, store.toObject(), { excludeExtraneousValues: true });
 
       this.logger.log(`Store with id: ${id} fetched successfully!`, correlationId);
@@ -143,18 +134,13 @@ export class StoreService {
 
     } catch (error) {
       this.logger.error(`Error fetching store with id: ${id}`, error.stack, correlationId);
-      throw error;
+      throw new HttpException(`Failed to fetch store with id: ${id}`, HttpStatus.NOT_FOUND);
     }
   }
 
   async getStoresByState(state: string, limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
     this.logger.log(`Fetching stores within state: ${state}.`, correlationId);
-
-    if (!state) {
-      this.logger.error("State not provided.", correlationId);
-      throw new BadRequestException("State is required.");
-    }
 
     try {
       const [stores, total] = await Promise.all([
@@ -173,7 +159,7 @@ export class StoreService {
 
     } catch (error) {
       this.logger.error(`Error fetching stores within state: ${state}.`, error.stack, correlationId);
-      throw error;
+      throw new HttpException(`Failed to fetch store within state: ${state}`, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -182,6 +168,9 @@ export class StoreService {
     this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
 
     try {
+      this.logger.log(`Validating postal code: ${postalCode}.`, correlationId);
+      validatePostalCode(postalCode);
+
       const pins: PinsProps[] = [];
 
       // Buscar as todas as stores

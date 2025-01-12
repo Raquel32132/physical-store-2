@@ -65,18 +65,17 @@ export class AddressService {
         headers: {'Content-Type': 'application/json',},
       });
 
-      this.logger.log(`Shipping calculated successfully: ${JSON.stringify(response.data)}`, correlationId);
-
       if (response.status !== 200) {
         this.logger.error("Failed to calculate shipping.", correlationId);
         throw new HttpException('Failed to calculate shipping.', HttpStatus.BAD_REQUEST);
       }
-
+      
+      this.logger.log(`Shipping calculated successfully: ${JSON.stringify(response.data)}`, correlationId);
       return response.data;
 
     } catch (error) {
       this.logger.error(`Error calculating shipping: ${error.message}`, error.stack, correlationId);
-      throw error;
+      throw new HttpException(`Error calculating coordinates from Correios API: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -100,14 +99,14 @@ export class AddressService {
       }
 
       this.logger.log(`Distance calculated successfully: ${data.rows[0].elements[0].distance.text}`, correlationId);
+
       const distanceText =  data.rows[0].elements[0].distance.text
       const distanceValue = data.rows[0].elements[0].distance.value
       return { distanceText, distanceValue };
 
     } catch (error) {
       this.logger.error(`Error calculating distance: ${error.message}`, error.stack, correlationId);
-      throw error;
+      throw new HttpException(`Error calculating distances with Google Maps API: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
-
 }

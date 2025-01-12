@@ -1,11 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
 import { StoreRequestDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
-import { AddressService } from "../services/address.service";
 
 @Controller('api/v1/store')
 export class StoreController {
-  constructor(private readonly storeService: StoreService, private readonly addressService: AddressService) {}
+  constructor(private readonly storeService: StoreService) {}
 
   // CRUD
   @Post()
@@ -61,7 +60,7 @@ export class StoreController {
 
     return {
       statusCode: 200,
-      message: 'Store fetched successfully',
+      message: `Stores with id ${id} fetched successfully`,
       stores: store
     }
   }
@@ -95,11 +94,4 @@ export class StoreController {
       total
     }
   }
-
-  //testando funções
-  // @Get('ship/:originPostalCode/:destinationPostalCode')
-  // async getAddressAndCoordinates(@Param('originPostalCode') originPostalCode: string, @Param('destinationPostalCode') destinationPostalCode: string, @Request() req) {
-  //   return await this.addressService.getShipping(originPostalCode, destinationPostalCode, req);
-  // }
-  
 }
