@@ -1,10 +1,10 @@
 import { Injectable, HttpStatus, HttpException } from "@nestjs/common";
-import { LoggerService } from "src/common/logger/logger.service";
 import axios from "axios";
-import { validatePostalCode } from "src/utils/validate-postal-code.util";
-import { ViaCepResponseProps } from "src/common/interfaces/via-cep-response.interface";
-import { Client } from "@googlemaps/google-maps-services-js";
+import { LoggerService } from "src/common/logger/logger.service";
+import { Client, DistanceMatrixResponseData } from "@googlemaps/google-maps-services-js";
 import { CorreiosResponseProps } from "src/common/interfaces/correios-response.interface";
+import { formatPostalCode } from "src/utils/validate-postal-code.util";
+
 
 @Injectable()
 export class AddressService {
@@ -16,33 +16,11 @@ export class AddressService {
     this.googleMapsClient = new Client({});
   }
 
-  async getAddressByPostalCode(postalCode: string, req: Request): Promise<ViaCepResponseProps> {
-    const correlationId = req['correlationId'];
-    this.logger.log(`Requesting address from ViaCep API through postal code: ${postalCode}`, correlationId);
-
-    try {
-      this.logger.log(`Validating postal code: ${postalCode}`, correlationId);
-      await validatePostalCode(postalCode);
-
-      const response = await axios.get<ViaCepResponseProps>(`${process.env.VIA_CEP_API_URL}${postalCode}/json/`);
-
-      this.logger.log(`Address successfully retrieved from ViaCep API. Response data: ${JSON.stringify(response.data)}`, correlationId);
-      return response.data;
-
-    } catch (error) {
-      this.logger.error(`Error requesting address from ViaCep API: ${error.message}`, error.stack, correlationId);
-      throw new HttpException(`Error requesting address from ViaCep API: ${error.message}`, HttpStatus.BAD_REQUEST);
-    }
-  }
-
   async getCoordinates(postalCode: string, req: Request): Promise<{ lat: number; lng: number }> {
     const correlationId = req['correlationId'];
     this.logger.log(`Requesting coordinates from Google Maps API through postal code: ${postalCode}`, correlationId);
 
-    try {
-      this.logger.log(`Validating postal code: ${postalCode}`, correlationId);
-      await validatePostalCode(postalCode);
-      
+    try {      
       const response = await this.googleMapsClient.geocode({
         params: {
           address: postalCode,
@@ -51,9 +29,11 @@ export class AddressService {
       });
 
       if (response.data.status === 'OK') {
-        this.logger.log(`Coordinates successfully retrieved from Google Maps API. Response data: ${JSON.stringify(response.data)}`, correlationId);
+        this.logger.log(`Coordinates successfully retrieved from Google Maps API. Response data: ${JSON.stringify(response.data.results[0].geometry.location)}`, correlationId);
         const { lat, lng } = response.data.results[0].geometry.location;
+
         return { lat, lng };
+
       } else {
         this.logger.error(`Failed requesting coordinates for postal code: ${postalCode}. Status: ${response.data.status}`, correlationId);
         throw new HttpException(`Failed requesting coordinates from Google Maps API: ${response.data.status}`, HttpStatus.BAD_REQUEST);
@@ -69,19 +49,18 @@ export class AddressService {
     const correlationId = req['correlationId'];
     this.logger.log(`Calculating shipping from ${originPostalCode} to ${destinationPostalCode}`, correlationId);
 
+    const formmatedOriginPostalCode = formatPostalCode(originPostalCode)
+    const formmatedDestinationPostalCode = formatPostalCode(destinationPostalCode)
+
     const payload = {
-      cepOrigem: originPostalCode,
-      cepDestino: destinationPostalCode,
+      cepOrigem: formmatedOriginPostalCode,
+      cepDestino: formmatedDestinationPostalCode,
       comprimento: "20",
       largura: "15",
       altura: "10",
     };
 
     try {
-      this.logger.log(`Validating postal codes: ${originPostalCode}, ${destinationPostalCode}`, correlationId);
-      await validatePostalCode(originPostalCode);
-      await validatePostalCode(destinationPostalCode);
-
       const response = await axios.post<CorreiosResponseProps[]>(`${process.env.CORREIOS_API_URL}`, payload, {
         headers: {'Content-Type': 'application/json',},
       });
@@ -89,7 +68,7 @@ export class AddressService {
       this.logger.log(`Shipping calculated successfully: ${JSON.stringify(response.data)}`, correlationId);
 
       if (response.status !== 200) {
-        this.logger.error(`Failed to calculate shipping. Response: ${JSON.stringify(response.data)}`, correlationId);
+        this.logger.error("Failed to calculate shipping.", correlationId);
         throw new HttpException('Failed to calculate shipping.', HttpStatus.BAD_REQUEST);
       }
 
@@ -97,6 +76,36 @@ export class AddressService {
 
     } catch (error) {
       this.logger.error(`Error calculating shipping: ${error.message}`, error.stack, correlationId);
+      throw error;
+    }
+  }
+
+  async getDistance(originPostalCode: string, destinationPostalCode: string, req: Request): Promise<{ distanceText: string, distanceValue: number}> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Calculating distance from ${originPostalCode} to ${destinationPostalCode}`, correlationId);
+
+    const payload = {
+      origins: [originPostalCode],
+      destinations: [destinationPostalCode],
+      key: process.env.GOOGLE_MAPS_API_KEY,
+    };
+
+    try {
+      const response = await this.googleMapsClient.distancematrix({ params: payload })
+      const data: DistanceMatrixResponseData = response.data;
+
+      if (data.status !== 'OK') {
+        this.logger.error(`Failed to calculate distance. Response: ${data.error_message}`, correlationId);
+        throw new HttpException('Failed to calculate distance.', HttpStatus.BAD_REQUEST);
+      }
+
+      this.logger.log(`Distance calculated successfully: ${data.rows[0].elements[0].distance.text}`, correlationId);
+      const distanceText =  data.rows[0].elements[0].distance.text
+      const distanceValue = data.rows[0].elements[0].distance.value
+      return { distanceText, distanceValue };
+
+    } catch (error) {
+      this.logger.error(`Error calculating distance: ${error.message}`, error.stack, correlationId);
       throw error;
     }
   }

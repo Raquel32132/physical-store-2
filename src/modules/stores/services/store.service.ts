@@ -1,23 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
-import { StoreRequestDto, StoreResponseDto } from '../dto/store.dto';
+import { LOJAStoreDto, PDVStoreDto, StoreRequestDto, StoreResponseDto, StoreType } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
+import { PinsProps } from 'src/common/interfaces/pins.interface';
+import { AddressService } from './address.service';
 
 @Injectable()
 export class StoreService {
   constructor(
+    private readonly addressService: AddressService,
+
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly logger: LoggerService,
   ) {}
 
   // CRUD service
+  // ajustar para que nao deixe criar lojas com cep invalido
   async createStore(createStoreDto: StoreRequestDto, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log('Creating new store.', correlationId);
 
     try {
@@ -37,7 +40,6 @@ export class StoreService {
 
   async updateStore(id: string, storeDto: StoreRequestDto, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Updating store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -68,7 +70,6 @@ export class StoreService {
 
   async deleteStore(id: string, req: Request): Promise<void> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Deleting store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -95,7 +96,6 @@ export class StoreService {
   // Requested services
   async getAllStores(limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
-
     this.logger.log('Fetching all stores.', correlationId);
 
     try {
@@ -121,7 +121,6 @@ export class StoreService {
 
   async getStoreById(id: string, req: Request): Promise<StoreResponseDto> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Fetching store with id: ${id}.`, correlationId);
 
     if (!Types.ObjectId.isValid(id)) {
@@ -150,7 +149,6 @@ export class StoreService {
 
   async getStoresByState(state: string, limit: number, offset: number, req: Request): Promise<{ stores: StoreResponseDto[], total: number }> {
     const correlationId = req['correlationId'];
-
     this.logger.log(`Fetching stores within state: ${state}.`, correlationId);
 
     if (!state) {
@@ -179,4 +177,102 @@ export class StoreService {
     }
   }
 
+  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: (PDVStoreDto | LOJAStoreDto)[], pins: PinsProps[], total: number }> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
+
+    try {
+      const pins: PinsProps[] = [];
+
+      // Buscar as todas as stores
+      const [stores]: [Store[], number] = await Promise.all([
+        this.storeModel
+          .find()
+          .skip(offset)
+          .limit(limit)
+          .exec(),
+        this.storeModel.countDocuments().exec()
+      ]);
+
+      // Calculando frete, distancia e coordenadas
+      const storesWithInformation = await Promise.all(stores.map(async (store) => {
+        let value;
+        const { distanceText, distanceValue } = await this.addressService.getDistance(store.postalCode, postalCode, req);
+        const distanceValueKM = parseFloat((distanceValue / 1000).toFixed(1));
+
+        // 1- pdv +50km - sem entrega | não listar
+        if (store.type === StoreType.PDV && distanceValueKM > 50) {
+          return null;
+        }
+
+        // 2 - pdv -50km - entrega como PDV   |   3 - loja -50km - entrega como PDV
+        if (store.type === StoreType.PDV || (store.type === StoreType.LOJA && distanceValueKM <= 50)) {
+          const prazoPDV = Math.ceil(distanceValueKM / 40);
+          value = [{
+            prazo: `${prazoPDV} hora${prazoPDV > 1 ? 's' : ''}`,
+            price: "R$ 15,00",
+            description: "Motoboy",
+          }];
+        } 
+
+        // 4 - loja +50km - frete correios
+        if (store.type === StoreType.LOJA && distanceValueKM > 50) {
+          const shipping = await this.addressService.getShipping(store.postalCode, postalCode, req);
+          
+          value = shipping.map(item => ({
+            prazo: item.prazo,
+            codProdutoAgencia: item.codProdutoAgencia,
+            price: item.precoPPN,
+            description: item.urlTitulo,
+          }));
+        }
+
+        const coordinates = await this.addressService.getCoordinates(store.postalCode, req);
+  
+        pins.push({
+          position: {
+            lat: coordinates.lat,
+            lng: coordinates.lng,
+          },
+          title: store.storeName
+        });
+
+        return {
+          storeName: store.storeName,
+          city: store.city,
+          postalCode: store.postalCode,
+          type: store.type,
+          distanceText,
+          value,
+        };
+      }))
+
+      const validStores = storesWithInformation.filter(store => store !== null);
+
+      const transformedStores = validStores.map(store => {
+        const transformedStore = store.type === StoreType.PDV
+        ? new PDVStoreDto()
+        : new LOJAStoreDto();
+
+        transformedStore.name = store.storeName;
+        transformedStore.city = store.city;
+        transformedStore.postalCode = store.postalCode;
+        transformedStore.type = store.type as StoreType;
+
+        transformedStore.distance = store.distanceText; 
+        transformedStore.value = store.value;
+
+        return transformedStore;
+      });
+
+      const total = transformedStores.length;
+
+      this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
+      return { stores: transformedStores, pins, total };
+
+    } catch (error) {
+      this.logger.error(`Error fetching stores with shipping to the postal code: ${postalCode}.`, error.stack, correlationId);
+      throw error;
+    }
+  }
 }

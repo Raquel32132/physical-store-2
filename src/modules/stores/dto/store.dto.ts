@@ -1,7 +1,8 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsString, IsBoolean, IsNumber, IsEnum, IsOptional, IsNotEmpty, Min, Max } from 'class-validator';
+import { StoreBaseProps } from 'src/common/interfaces/store-base.interface';
 
-enum StoreType {
+export enum StoreType {
   PDV = 'PDV',
   LOJA = 'LOJA',
 }
@@ -137,4 +138,70 @@ export class StoreResponseDto {
 
   @Exclude()
   __v?: number;
+}
+
+// export class PDVStoreDto implements StoreBaseProps {
+//   @Expose()
+//   name: string;
+//   @Expose()
+//   city: string;
+//   @Expose()
+//   postalCode: string;
+//   @Expose()
+//   type: StoreType.PDV;
+//   @Expose()
+//   distance: string;
+//   @Expose()
+//   value: {
+//     prazo: string;
+//     price: string;
+//     description: string;
+//   }[]
+// }
+
+// export class LOJAStoreDto implements StoreBaseProps {
+//   @Expose()
+//   name: string;
+//   @Expose()
+//   city: string;
+//   @Expose()
+//   postalCode: string;
+//   @Expose()
+//   type: StoreType.LOJA;
+//   @Expose()
+//   distance: string;
+//   @Expose()
+//   value: {
+//     prazo: string;
+//     codProdutoAgencia: string;
+//     price: string;
+//     description: string;
+//   }[];
+// }
+
+export class PDVStoreDto implements StoreBaseProps {
+  name: string;
+  city: string;
+  postalCode: string;
+  type: StoreType.PDV;
+  distance: string;
+  value: {
+    prazo: string;
+    price: string;
+    description: string;
+  }[]
+}
+
+export class LOJAStoreDto implements StoreBaseProps {
+  name: string;
+  city: string;
+  postalCode: string;
+  type: StoreType.LOJA;
+  distance: string;
+  value: {
+    prazo: string;
+    codProdutoAgencia: string;
+    price: string;
+    description: string;
+  }[];
 }
