@@ -1,13 +1,19 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request } from "@nestjs/common";
-import { StoreRequestDto } from "../dto/store.dto";
+import { StoreRequestDto, StoreResponseDto } from "../dto/store.dto";
 import { StoreService } from "../services/store.service";
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 
+@ApiTags('store')
 @Controller('api/v1/store')
 export class StoreController {
   constructor(private readonly storeService: StoreService) {}
 
   // CRUD
   @Post()
+  @ApiOperation({ summary: 'Create a store' })
+  @ApiResponse({ status: 200, description: 'Store created successfully', type: StoreResponseDto })
+  @ApiResponse({ status: 500, description: 'Error creating store' })
+  @ApiBody({ type: StoreRequestDto })
   async createStore(@Body() createStoreDto: StoreRequestDto, @Request() req) {
     const store = await this.storeService.createStore(createStoreDto, req);
 
