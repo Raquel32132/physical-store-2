@@ -185,7 +185,7 @@ export class StoreService {
       const pins: PinsProps[] = [];
 
       // Buscar as todas as stores
-      const [stores, total]: [Store[], number] = await Promise.all([
+      const [stores]: [Store[], number] = await Promise.all([
         this.storeModel
           .find()
           .skip(offset)
@@ -196,18 +196,29 @@ export class StoreService {
 
       // Calculando frete, distancia e coordenadas
       const storesWithInformation = await Promise.all(stores.map(async (store) => {
-        const shipping = await this.addressService.getShipping(store.postalCode, postalCode, req);
-        const distance = await this.addressService.getDistance(store.postalCode, postalCode, req);
-        const coordinates = await this.addressService.getCoordinates(store.postalCode, req);
-
         let value;
-        if (store.type === StoreType.PDV) {
-          value = shipping.map(item => ({
-            prazo: item.prazo,
-            price: item.precoPPN,
-            description: item.urlTitulo,
-          }));
-        } else if (store.type === StoreType.LOJA) {
+        const { distanceText, distanceValue } = await this.addressService.getDistance(store.postalCode, postalCode, req);
+        const distanceValueKM = parseFloat((distanceValue / 1000).toFixed(1));
+
+        // 1- pdv +50km - sem entrega | não listar
+        if (store.type === StoreType.PDV && distanceValueKM > 50) {
+          return null;
+        }
+
+        // 2 - pdv -50km - entrega como PDV   |   3 - loja -50km - entrega como PDV
+        if (store.type === StoreType.PDV || (store.type === StoreType.LOJA && distanceValueKM <= 50)) {
+          const prazoPDV = Math.ceil(distanceValueKM / 40);
+          value = [{
+            prazo: `${prazoPDV} hora${prazoPDV > 1 ? 's' : ''}`,
+            price: "R$ 15,00",
+            description: "Motoboy",
+          }];
+        } 
+
+        // 4 - loja +50km - frete correios
+        if (store.type === StoreType.LOJA && distanceValueKM > 50) {
+          const shipping = await this.addressService.getShipping(store.postalCode, postalCode, req);
+          
           value = shipping.map(item => ({
             prazo: item.prazo,
             codProdutoAgencia: item.codProdutoAgencia,
@@ -216,6 +227,8 @@ export class StoreService {
           }));
         }
 
+        const coordinates = await this.addressService.getCoordinates(store.postalCode, req);
+  
         pins.push({
           position: {
             lat: coordinates.lat,
@@ -229,12 +242,14 @@ export class StoreService {
           city: store.city,
           postalCode: store.postalCode,
           type: store.type,
-          distance,
+          distanceText,
           value,
         };
       }))
 
-      const transformedStores = storesWithInformation.map(store => {
+      const validStores = storesWithInformation.filter(store => store !== null);
+
+      const transformedStores = validStores.map(store => {
         const transformedStore = store.type === StoreType.PDV
         ? new PDVStoreDto()
         : new LOJAStoreDto();
@@ -244,12 +259,13 @@ export class StoreService {
         transformedStore.postalCode = store.postalCode;
         transformedStore.type = store.type as StoreType;
 
-        transformedStore.distance = store.distance; 
+        transformedStore.distance = store.distanceText; 
         transformedStore.value = store.value;
-        console.log(store.storeName)
 
         return transformedStore;
       });
+
+      const total = transformedStores.length;
 
       this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
       return { stores: transformedStores, pins, total };
@@ -259,5 +275,4 @@ export class StoreService {
       throw error;
     }
   }
-
 }

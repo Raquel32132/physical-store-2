@@ -80,7 +80,7 @@ export class AddressService {
     }
   }
 
-  async getDistance(originPostalCode: string, destinationPostalCode: string, req: Request): Promise<string> {
+  async getDistance(originPostalCode: string, destinationPostalCode: string, req: Request): Promise<{ distanceText: string, distanceValue: number}> {
     const correlationId = req['correlationId'];
     this.logger.log(`Calculating distance from ${originPostalCode} to ${destinationPostalCode}`, correlationId);
 
@@ -100,7 +100,9 @@ export class AddressService {
       }
 
       this.logger.log(`Distance calculated successfully: ${data.rows[0].elements[0].distance.text}`, correlationId);
-      return data.rows[0].elements[0].distance.text;
+      const distanceText =  data.rows[0].elements[0].distance.text
+      const distanceValue = data.rows[0].elements[0].distance.value
+      return { distanceText, distanceValue };
 
     } catch (error) {
       this.logger.error(`Error calculating distance: ${error.message}`, error.stack, correlationId);
