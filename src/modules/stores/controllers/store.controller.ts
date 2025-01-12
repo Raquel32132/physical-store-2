@@ -12,8 +12,6 @@ export class StoreController {
     const store = await this.storeService.createStore(createStoreDto, req);
 
     return {
-      statusCode: 201,
-      message: 'Store created successfully',
       store: store
     }
   }
@@ -23,8 +21,6 @@ export class StoreController {
     const updatedStore = await this.storeService.updateStore(id, storeDto, req);
 
     return {
-      statusCode: 200,
-      message: 'Store updated successfully',
       data: updatedStore
     }
   }
@@ -32,11 +28,6 @@ export class StoreController {
   @Delete(':id')
   async deleteStore(@Param('id') id: string, @Request() req) {
     await this.storeService.deleteStore(id, req);
-
-    return {
-      statusCode: 200,
-      message: 'Store deleted successfully'
-    }
   }
 
   // Endpoints requisitadas
@@ -45,8 +36,6 @@ export class StoreController {
     const { stores, total } = await this.storeService.getAllStores(limit, offset, req);
 
     return {
-      statusCode: 200,
-      message: 'Stores fetched successfully',
       stores,
       limit,
       offset, 
@@ -59,8 +48,6 @@ export class StoreController {
     const store = await this.storeService.getStoreById(id, req);
 
     return {
-      statusCode: 200,
-      message: `Stores with id ${id} fetched successfully`,
       stores: store
     }
   }
@@ -70,8 +57,6 @@ export class StoreController {
     const { stores, total } = await this.storeService.getStoresByState(state, limit, offset, req);
 
     return {
-      statusCode: 200,
-      message: `Stores within state ${state} fetched successfully`,
       stores,
       limit,
       offset,
@@ -85,8 +70,6 @@ export class StoreController {
     const { stores, total, pins } = await this.storeService.getStoresShipping(postalCode, limit, offset, req);
 
     return {
-      statusCode: 200,
-      message: `Stores with shipping to the postal code ${postalCode} fetched successfully`,
       stores,
       pins,
       limit,

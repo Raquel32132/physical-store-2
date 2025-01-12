@@ -3,8 +3,8 @@ import axios from "axios";
 import { LoggerService } from "src/common/logger/logger.service";
 import { Client, DistanceMatrixResponseData } from "@googlemaps/google-maps-services-js";
 import { CorreiosResponseProps } from "src/common/interfaces/correios-response.interface";
-import { formatPostalCode } from "src/utils/validate-postal-code.util";
-
+import { formatPostalCode } from "src/utils/format-postal-code.util";
+import { ViaCepResponseProps } from "src/common/interfaces/via-cep-response.interface";
 
 @Injectable()
 export class AddressService {
@@ -14,6 +14,36 @@ export class AddressService {
     private readonly logger: LoggerService
   ) {
     this.googleMapsClient = new Client({});
+  }
+
+  async validatePostalCode(postalCode: string, req: Request): Promise<void> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Validating postal code: : ${postalCode} with ViaCEP API`, correlationId);
+
+    const postalCodePattern = /^\d{8}$/;
+
+    if (!postalCode) {
+      this.logger.log('Postal code is required', correlationId);
+      throw new HttpException('Postal code is required', HttpStatus.BAD_GATEWAY);
+    };
+  
+    if (!postalCodePattern.test(postalCode)) {
+      this.logger.log(`Invalid postal code format: ${postalCode}`, correlationId);
+      throw new HttpException(`Invalid postal code format: ${postalCode}`, HttpStatus.BAD_REQUEST);
+    };
+
+    try {
+      const response = await axios.get<ViaCepResponseProps>(`${process.env.VIA_CEP_API_URL}${postalCode}/json/`);
+
+      if (response.status !== 200) {
+        this.logger.log(`Postal code not found: ${postalCode}`, correlationId);
+        throw new HttpException(`Postal code not found: ${postalCode}`, HttpStatus.NOT_FOUND);
+      }
+
+    } catch (error) {
+      this.logger.error(`Error validating postal code with ViaCEP API: ${error.message}`, error.stack, correlationId);
+      throw new HttpException(`Faield to validate postal code with ViaCEP API: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async getCoordinates(postalCode: string, req: Request): Promise<{ lat: number; lng: number }> {
@@ -41,7 +71,7 @@ export class AddressService {
 
     } catch (error) {
       this.logger.error(`Error requesting coordinates from Google Maps API: ${error.message}`, error.stack, correlationId);
-      throw new HttpException(`Error requesting coordinates from Google Maps API: ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Error requesting coordinates from Google Maps API: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -75,7 +105,7 @@ export class AddressService {
 
     } catch (error) {
       this.logger.error(`Error calculating shipping: ${error.message}`, error.stack, correlationId);
-      throw new HttpException(`Error calculating coordinates from Correios API: ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Error calculating coordinates from Correios API: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -106,7 +136,7 @@ export class AddressService {
 
     } catch (error) {
       this.logger.error(`Error calculating distance: ${error.message}`, error.stack, correlationId);
-      throw new HttpException(`Error calculating distances with Google Maps API: ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Error calculating distances with Google Maps API: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
