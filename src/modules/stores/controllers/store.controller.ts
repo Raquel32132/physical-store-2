@@ -81,27 +81,25 @@ export class StoreController {
   }
 
   // Requisição que retorna fretes e valores nas stores
-  // @Get('shipping/:postalCode')
-  // async getStoresShipping(@Param('postalCode') postalCode: string, @Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
-  //   const { stores, total, pins } = await this.storeService.getStoresShipping(postalCode, limit, offset, req);
+  @Get('shipping/:postalCode')
+  async getStoresShipping(@Param('postalCode') postalCode: string, @Query('limit') limit: number = 10, @Query('offset') offset: number = 1, @Request() req) {
+    const { stores, total, pins } = await this.storeService.getStoresShipping(postalCode, limit, offset, req);
 
-  //   return {
-  //     statusCode: 200,
-  //     message: `Stores with shipping to the postal code ${postalCode} fetched successfully`,
-  //     stores,
-  //     pins,
-  //     limit,
-  //     offset,
-  //     total
-  //   }
-  // }
-
-
+    return {
+      statusCode: 200,
+      message: `Stores with shipping to the postal code ${postalCode} fetched successfully`,
+      stores,
+      pins,
+      limit,
+      offset,
+      total
+    }
+  }
 
   //testando funções
-  @Get('shipping/:originPostalCode/:destinationPostalCode')
-  async getAddressAndCoordinates(@Param('originPostalCode') originPostalCode: string, @Param('destinationPostalCode') destinationPostalCode: string, @Request() req) {
-    return await this.addressService.getShipping(originPostalCode, destinationPostalCode, req);
-  }
+  // @Get('ship/:originPostalCode/:destinationPostalCode')
+  // async getAddressAndCoordinates(@Param('originPostalCode') originPostalCode: string, @Param('destinationPostalCode') destinationPostalCode: string, @Request() req) {
+  //   return await this.addressService.getShipping(originPostalCode, destinationPostalCode, req);
+  // }
   
 }

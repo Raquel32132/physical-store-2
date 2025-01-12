@@ -140,6 +140,45 @@ export class StoreResponseDto {
   __v?: number;
 }
 
+// export class PDVStoreDto implements StoreBaseProps {
+//   @Expose()
+//   name: string;
+//   @Expose()
+//   city: string;
+//   @Expose()
+//   postalCode: string;
+//   @Expose()
+//   type: StoreType.PDV;
+//   @Expose()
+//   distance: string;
+//   @Expose()
+//   value: {
+//     prazo: string;
+//     price: string;
+//     description: string;
+//   }[]
+// }
+
+// export class LOJAStoreDto implements StoreBaseProps {
+//   @Expose()
+//   name: string;
+//   @Expose()
+//   city: string;
+//   @Expose()
+//   postalCode: string;
+//   @Expose()
+//   type: StoreType.LOJA;
+//   @Expose()
+//   distance: string;
+//   @Expose()
+//   value: {
+//     prazo: string;
+//     codProdutoAgencia: string;
+//     price: string;
+//     description: string;
+//   }[];
+// }
+
 export class PDVStoreDto implements StoreBaseProps {
   name: string;
   city: string;

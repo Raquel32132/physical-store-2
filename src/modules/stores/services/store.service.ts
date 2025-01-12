@@ -1,16 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Request } from 'express';
 import { Store } from '../schemas/store.schema';
 import { LOJAStoreDto, PDVStoreDto, StoreRequestDto, StoreResponseDto, StoreType } from '../dto/store.dto';
 import { LoggerService } from 'src/common/logger/logger.service';
 import { plainToInstance } from 'class-transformer';
 import { PinsProps } from 'src/common/interfaces/pins.interface';
+import { AddressService } from './address.service';
 
 @Injectable()
 export class StoreService {
   constructor(
+    private readonly addressService: AddressService,
+
     @InjectModel(Store.name) private readonly storeModel: Model<Store>,
     private readonly logger: LoggerService,
   ) {}
@@ -175,35 +177,87 @@ export class StoreService {
     }
   }
 
-  // async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: (PDVStoreDto | LOJAStoreDto)[], pins: PinsProps[], total: number }> {
-  //   const correlationId = req['correlationId'];
-  //   this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
+  async getStoresShipping(postalCode: string, limit: number, offset: number, req: Request): Promise<{ stores: (PDVStoreDto | LOJAStoreDto)[], pins: PinsProps[], total: number }> {
+    const correlationId = req['correlationId'];
+    this.logger.log(`Fetching stores with shipping to the postal code: ${postalCode}.`, correlationId);
 
-  //   try {
-  //     // Buscar as todas as stores
+    try {
+      const pins: PinsProps[] = [];
 
-  //     // Pegar o cep de cada store e calcular o frete
+      // Buscar as todas as stores
+      const [stores, total]: [Store[], number] = await Promise.all([
+        this.storeModel
+          .find()
+          .skip(offset)
+          .limit(limit)
+          .exec(),
+        this.storeModel.countDocuments().exec()
+      ]);
 
-  //     // Criar os pins de cada store
+      // Calculando frete, distancia e coordenadas
+      const storesWithInformation = await Promise.all(stores.map(async (store) => {
+        const shipping = await this.addressService.getShipping(store.postalCode, postalCode, req);
+        const distance = await this.addressService.getDistance(store.postalCode, postalCode, req);
+        const coordinates = await this.addressService.getCoordinates(store.postalCode, req);
 
-  //     // Definir body da response diferente para LOJA e PDV
+        let value;
+        if (store.type === StoreType.PDV) {
+          value = shipping.map(item => ({
+            prazo: item.prazo,
+            price: item.precoPPN,
+            description: item.urlTitulo,
+          }));
+        } else if (store.type === StoreType.LOJA) {
+          value = shipping.map(item => ({
+            prazo: item.prazo,
+            codProdutoAgencia: item.codProdutoAgencia,
+            price: item.precoPPN,
+            description: item.urlTitulo,
+          }));
+        }
 
-  //     // Tranformar as stores na suas devida DTO
-  //     const transformedStores = stores.map(store => {
-  //       if (store.type === StoreType.PDV) {
-  //         return plainToInstance(PDVStoreDto, store, { excludeExtraneousValues: true });
-  //       } else if (store.type === StoreType.LOJA) {
-  //         return plainToInstance(LOJAStoreDto, store, { excludeExtraneousValues: true });
-  //       } 
-  //     });
+        pins.push({
+          position: {
+            lat: coordinates.lat,
+            lng: coordinates.lng,
+          },
+          title: store.storeName
+        });
 
-  //     this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
-  //     return { stores: transformedStores, pins, total };
+        return {
+          storeName: store.storeName,
+          city: store.city,
+          postalCode: store.postalCode,
+          type: store.type,
+          distance,
+          value,
+        };
+      }))
 
-  //   } catch (error) {
-  //     this.logger.error(`Error fetching stores with shipping to the postal code: ${postalCode}.`, error.stack, correlationId);
-  //     throw error;
-  //   }
-  // }
+      const transformedStores = storesWithInformation.map(store => {
+        const transformedStore = store.type === StoreType.PDV
+        ? new PDVStoreDto()
+        : new LOJAStoreDto();
+
+        transformedStore.name = store.storeName;
+        transformedStore.city = store.city;
+        transformedStore.postalCode = store.postalCode;
+        transformedStore.type = store.type as StoreType;
+
+        transformedStore.distance = store.distance; 
+        transformedStore.value = store.value;
+        console.log(store.storeName)
+
+        return transformedStore;
+      });
+
+      this.logger.log(`Stores with shipping to the postal code: ${postalCode} fetched successfully!`, correlationId);
+      return { stores: transformedStores, pins, total };
+
+    } catch (error) {
+      this.logger.error(`Error fetching stores with shipping to the postal code: ${postalCode}.`, error.stack, correlationId);
+      throw error;
+    }
+  }
 
 }
