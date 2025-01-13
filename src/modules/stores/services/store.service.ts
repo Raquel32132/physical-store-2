@@ -192,13 +192,13 @@ export class StoreService {
         description: item.urlTitulo,
       }));
     }
-  
-    const coordinates = await this.addressService.getCoordinates(store.postalCode, req);
+
+    const coordinates = await this.addressService.getCoordinatesWithOpenCage(store.postalCode, req);
 
     pins.push({
       position: {
-        lat: coordinates.lat,
-        lng: coordinates.lng,
+        lat: coordinates.latitude,
+        lng: coordinates.longitude,
       },
       title: store.storeName,
     });

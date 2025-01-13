@@ -5,4 +5,6 @@ export interface ViaCepResponseProps {
   bairro: string;
   localidade: string;
   estado: string;
+  uf: string;
+  erro?: boolean;
 }
