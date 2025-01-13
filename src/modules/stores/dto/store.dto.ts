@@ -23,7 +23,7 @@ export class StoreRequestDto {
   @IsNotEmpty()
   shippingTimeInDays: number;
 
-  @ApiProperty({ description: 'Type of the store', type: StoreType, example: StoreType.LOJA, enumName: 'StoreType' })
+  @ApiProperty({ description: 'Type of the store', type: () => StoreType, example: StoreType.LOJA, enumName: 'StoreType', enum: StoreType })
   @IsEnum(StoreType)
   @IsNotEmpty()
   type: StoreType;
@@ -111,7 +111,7 @@ export class StoreResponseDto {
   @Expose()
   shippingTimeInDays: number;
 
-  @ApiProperty({ description: 'Type of the store', type: StoreType, example: StoreType.LOJA, enumName: 'StoreType' })
+  @ApiProperty({ description: 'Type of the store', type: () => StoreType, example: StoreType.LOJA, enumName: 'StoreType', enum: StoreType })
   @Expose()
   type: StoreType;
 
@@ -174,13 +174,13 @@ export class StoreResponseDto {
 }
 
 class PDVValueDto {
-  @ApiProperty({ description: 'Delivery time', type: String, example: '4 dias úteis' })
+  @ApiProperty({ description: 'Delivery time', type: 'string', example: '4 dias úteis' })
   prazo: string;
 
-  @ApiProperty({ description: 'Delivery price', type: String, example: 'R$ 42,05' })
+  @ApiProperty({ description: 'Delivery price', type: 'string', example: 'R$ 42,05' })
   price: string;
 
-  @ApiProperty({ description: 'Type of agency for the delivery', type: String, example: 'Sedex a encomenda expressa dos Correios' })
+  @ApiProperty({ description: 'Type of agency for the delivery', type: 'string', example: 'Sedex a encomenda expressa dos Correios' })
   description: string;
 }
 
@@ -194,7 +194,7 @@ export class PDVStoreDto {
   @ApiProperty({ description: 'Postal code of the store', type: 'string', example: '88080080' })
   postalCode: string;
 
-  @ApiProperty({ description: 'Type of the store', type: StoreType, example: StoreType.LOJA, enumName: 'StoreType' })
+  @ApiProperty({ description: 'Type of the store', type: () => StoreType, example: StoreType.LOJA, enumName: 'StoreType', enum: StoreType })
   type: StoreType.PDV;
 
   @ApiProperty({ description: 'Distance between the store to the postal code informed', type: 'string', example: '2.1 km' })
@@ -205,16 +205,16 @@ export class PDVStoreDto {
 }
 
 class LOJAValueDto {
-  @ApiProperty({ description: 'Delivery time', type: String, example: '4 dias úteis' })
+  @ApiProperty({ description: 'Delivery time', type: 'string', example: '4 dias úteis' })
   prazo: string;
 
-  @ApiProperty({ description: 'Correios agency code', type: String, example: '04014' })
+  @ApiProperty({ description: 'Correios agency code', type: 'string', example: '04014' })
   codProdutoAgencia: string;
 
-  @ApiProperty({ description: 'Delivery price', type: String, example: 'R$ 42,05' })
+  @ApiProperty({ description: 'Delivery price', type: 'string', example: 'R$ 42,05' })
   price: string;
 
-  @ApiProperty({ description: 'Type of agency for the delivery', type: String, example: 'Sedex a encomenda expressa dos Correios' })
+  @ApiProperty({ description: 'Type of agency for the delivery', type: 'string', example: 'Sedex a encomenda expressa dos Correios' })
   description: string;
 }
 
@@ -228,12 +228,12 @@ export class LOJAStoreDto {
   @ApiProperty({ description: 'Postal code of the store', type: 'string', example: '88080080' })
   postalCode: string;
 
-  @ApiProperty({ description: 'Type of the store', type: StoreType, example: StoreType.LOJA, enumName: 'StoreType' })
+  @ApiProperty({ description: 'Type of the store', type: () => StoreType, example: StoreType.LOJA, enumName: 'StoreType', enum: StoreType })
   type: StoreType.LOJA;
 
   @ApiProperty({ description: 'Distance between the store to the postal code informed', type: 'string', example: '2.1 km' })
   distance: string;
 
-  @ApiProperty({ description: 'List of values that contains delivery time, distance, value and Correios agency code', type: [PDVValueDto] })
+  @ApiProperty({ description: 'List of values that contains delivery time, distance, value and Correios agency code', type: [LOJAValueDto] })
   value: LOJAValueDto[];
 }
